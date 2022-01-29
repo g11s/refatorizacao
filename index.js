@@ -1,27 +1,29 @@
 const invoices = require('./invoices.json');
 const plays = require('./plays.json');
-
-let start = Date.now();
-let end = 0;
+const invoice = invoices[0]
 
 function statement(invoice) {
-    let totalAmount = 0;
-    let volumeCredits = 0;
+    return renderPlainText(invoice);
+}
+
+function renderPlainText(invoice) {
     let result = `Statement for ${invoice.customer}\n`;
     
     for(let perf of invoice.performances) {
-        volumeCredits += volumeCreditsFor(perf);
-
-        // exibe a linha para esta requisição
-        result += ` ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience} seats)\n`;
-        totalAmount += amountFor(perf);
+        result += ` ${playFor(perf).name}: ${usd(amountFor(perf)/100)} (${perf.audience} seats)\n`;
     }
+    
+    result += `Amount owned is ${usd(totalAmount()/100)}\n`;
+    result += `You earned ${totalVolumeCredits()} credits\n`;
 
-    result += `Amount owned is ${format(totalAmount/100)}\n`;
-    result += `You earned ${volumeCredits} credits\n`;
+    return result;
+}
 
-
-    end = Date.now();
+function totalAmount() {
+    let result  = 0;
+    for(let perf of invoice.performances) {
+        result += amountFor(perf);
+    }
 
     return result;
 }
@@ -54,6 +56,15 @@ function playFor(aPerformance) {
     return plays[aPerformance.playID];
 }
 
+function totalVolumeCredits() {
+    let result = 0;
+    for(let perf of invoice.performances) {
+        result += volumeCreditsFor(perf);
+    }
+
+    return result;
+}
+
 function volumeCreditsFor(aPerformance) {
     let result = 0;
     result += Math.max(aPerformance.audience - 30, 0);
@@ -65,12 +76,9 @@ function volumeCreditsFor(aPerformance) {
     return result;
 }
 
-function format(aNumber) {
+function usd(aNumber) {
     return new Intl.NumberFormat("en-us",
                                             { style: "currency", currency: "USD", minimumFractionDigits: 2}).format(aNumber);
 }
 
-const result = statement(invoices[0]);
-
-console.log(result);
-console.log(`Execution time: ${end - start} ms`);
+console.log(statement(invoice));
