@@ -7,21 +7,14 @@ let end = 0;
 function statement(invoice) {
     let totalAmount = 0;
     let volumeCredits = 0;
-    let result = `Statement for ${invoice.customer}\n`
-    const format = new Intl.NumberFormat("en-us",
-                                            { style: "currency", currency: "USD", minimumFractionDigits: 2}).format;
+    let result = `Statement for ${invoice.customer}\n`;
     
     for(let perf of invoice.performances) {
-        const thisAmount = amountFor(perf);
-
-        // soma créditos por volume
-        volumeCredits += Math.max(perf.audience - 30, 0);
-        // soma um crédito extr apara cada dez expectadores de comédia
-        if ("comedy" === playFor(perf).type) volumeCredits += Math.floor(perf.audience / 5);
+        volumeCredits += volumeCreditsFor(perf);
 
         // exibe a linha para esta requisição
-        result += ` ${playFor(perf).name}: ${format(thisAmount/100)} (${perf.audience} seats)\n`;
-        totalAmount += thisAmount;
+        result += ` ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience} seats)\n`;
+        totalAmount += amountFor(perf);
     }
 
     result += `Amount owned is ${format(totalAmount/100)}\n`;
@@ -59,6 +52,22 @@ function amountFor(aPerformance) {
 
 function playFor(aPerformance) {
     return plays[aPerformance.playID];
+}
+
+function volumeCreditsFor(aPerformance) {
+    let result = 0;
+    result += Math.max(aPerformance.audience - 30, 0);
+
+    if ("comedy" === playFor(aPerformance).type) {
+        result += Math.floor(aPerformance.audience / 5);
+    }
+
+    return result;
+}
+
+function format(aNumber) {
+    return new Intl.NumberFormat("en-us",
+                                            { style: "currency", currency: "USD", minimumFractionDigits: 2}).format(aNumber);
 }
 
 const result = statement(invoices[0]);
